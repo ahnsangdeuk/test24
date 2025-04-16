@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { AnimateOnScroll } from './animate-on-scroll';
+import Link from 'next/link';
 
 export function CTA() {
   return (
@@ -12,15 +13,17 @@ export function CTA() {
           Join thousands of businesses already using our platform to enhance their
           productivity and drive growth.
         </p>
-        <button
+        <Link
+          href="/login"
           className={cn(
+            "inline-block",
             "bg-card text-primary px-6 py-3 rounded-sm font-semibold text-lg",
             "hover:bg-card/90 hover:scale-105",
             "transition-all duration-300 ease-in-out"
           )}
         >
           Sign Up Now
-        </button>
+        </Link>
       </section>
     </AnimateOnScroll>
   );
