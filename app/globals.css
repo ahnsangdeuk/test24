@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Pretendard', Arial, sans-serif; /* Ensure Pretendard is loaded */
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
+/* Add Pretendard font import here if using CDN or local files */
+/* Example using CDN: */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+/* Add Pretendard font import here if using CDN or local files */
+/* Example using CDN:
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+*/ 
