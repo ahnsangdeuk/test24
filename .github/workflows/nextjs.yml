@@ -29,6 +29,8 @@ jobs:
   # 빌드 작업
   build:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_ACTIONS: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,6 +79,23 @@ jobs:
             
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
+      - name: Create mock static data
+        run: |
+          mkdir -p lib/mock-data
+          cat > lib/mock-data/posts.json << 'EOF'
+          [
+            {
+              "id": "1",
+              "title": "환영합니다!",
+              "content": "이것은 정적 빌드를 위한 샘플 글입니다.",
+              "category": "공지",
+              "tags": ["환영", "샘플"],
+              "createdAt": "2024-01-01T00:00:00Z",
+              "updatedAt": "2024-01-01T00:00:00Z"
+            }
+          ]
+          EOF
         
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build

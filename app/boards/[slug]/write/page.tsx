@@ -6,6 +6,20 @@ interface WritePageProps {
   };
 }
 
+// 정적 빌드를 위한 params 생성
+export async function generateStaticParams() {
+  // GitHub Actions 환경에서만 정적 params 생성
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    return [
+      { slug: 'notice' },
+      { slug: 'free' },
+      { slug: 'qna' },
+      { slug: 'dev' }
+    ];
+  }
+  return [];
+}
+
 export default async function WritePage({ params }: WritePageProps) {
   // 게시판 정보 가져오기
   let boardName = '';

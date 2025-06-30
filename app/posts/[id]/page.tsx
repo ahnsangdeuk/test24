@@ -17,6 +17,18 @@ interface Post {
   updatedAt: string;
 }
 
+// 정적 빌드를 위한 params 생성 (서버 컴포넌트 함수)
+export async function generateStaticParams() {
+  // GitHub Actions 환경에서만 정적 params 생성
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    return [
+      { id: '1' },
+      { id: '2' }
+    ];
+  }
+  return [];
+}
+
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -198,35 +210,37 @@ export default function PostDetailPage() {
 
           {/* 글 내용 */}
           <div className="bg-card rounded-lg shadow p-8">
-            <div className="prose max-w-none">
-              <div className="text-foreground whitespace-pre-wrap leading-relaxed text-base">
-                {post.content}
-              </div>
+            <div 
+              className="prose prose-lg max-w-none text-foreground"
+              style={{ 
+                lineHeight: '1.8',
+                fontSize: '16px'
+              }}
+            >
+              {post.content.split('\n').map((paragraph, index) => (
+                <p key={index} className="mb-4">
+                  {paragraph}
+                </p>
+              ))}
             </div>
           </div>
 
-          {/* 하단 네비게이션 */}
-          <div className="mt-8 pt-6 border-t border-border">
+          {/* 네비게이션 */}
+          <div className="mt-8 pt-8 border-t border-border">
             <div className="flex justify-between items-center">
               <Link
                 href="/posts"
                 className={cn(
-                  "inline-flex items-center px-4 py-2 border border-border text-foreground rounded-md font-medium",
-                  "hover:bg-muted transition-colors"
+                  "inline-flex items-center px-4 py-2 text-sm bg-muted text-muted-foreground rounded-md",
+                  "hover:bg-muted/80 transition-colors"
                 )}
               >
-                글 목록
+                ← 글 목록
               </Link>
               
-              <Link
-                href="/write"
-                className={cn(
-                  "inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium",
-                  "hover:bg-primary/90 transition-colors"
-                )}
-              >
-                새 글 작성
-              </Link>
+              <div className="text-sm text-muted">
+                글 ID: {post.id}
+              </div>
             </div>
           </div>
         </article>

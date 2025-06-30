@@ -6,6 +6,20 @@ interface BoardPageProps {
   };
 }
 
+// 정적 빌드를 위한 params 생성
+export async function generateStaticParams() {
+  // GitHub Actions 환경에서만 정적 params 생성
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    return [
+      { slug: 'notice' },
+      { slug: 'free' },
+      { slug: 'qna' },
+      { slug: 'dev' }
+    ];
+  }
+  return [];
+}
+
 export default function BoardPage({ params }: BoardPageProps) {
   return <BoardPostList boardSlug={params.slug} />;
 }
