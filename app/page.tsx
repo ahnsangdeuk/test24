@@ -3,6 +3,12 @@ import { Hero } from '@/components/hero'; // Import the Hero component
 import { Features } from '@/components/features'; // Import the Features component
 import { CTA } from '@/components/cta'; // Import the CTA component
 import { Footer } from '@/components/footer'; // Import the Footer component
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '커뮤니티 플랫폼',
+  description: '블로그와 게시판이 있는 현대적인 커뮤니티 플랫폼입니다. 다양한 주제로 소통하고 정보를 공유해보세요.',
+};
 
 export default function HomePage() {
   return (

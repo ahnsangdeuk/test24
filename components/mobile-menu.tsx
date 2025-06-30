@@ -81,17 +81,18 @@ export function MobileMenu({ navItems }: MobileMenuProps) {
             </ul>
           </nav>
 
-          {/* Get Started Button */}
-          <button
+          {/* 글쓰기 Button */}
+          <Link
+            href="/write"
             className={cn(
-              "bg-primary text-primary-foreground px-5 py-2.5 rounded-sm font-semibold text-lg w-full mt-8",
+              "bg-primary text-primary-foreground px-5 py-2.5 rounded-sm font-semibold text-lg w-full mt-8 text-center",
               "hover:bg-primary/90",
               "transition-colors"
             )}
-            onClick={closeMenu} // Also close menu when clicking this button if needed
+            onClick={closeMenu} // Also close menu when clicking this button
           >
-            Get Started
-          </button>
+            글쓰기
+          </Link>
         </div>
       )}
     </div>

@@ -8,8 +8,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: '#', label: 'Home' },
+  { href: '/', label: 'Home' },
   { href: '#features', label: 'Features' }, // Updated href for potential scrolling
+  { href: '/posts', label: '블로그' },
+  { href: '/boards', label: '게시판' },
+  { href: '/write', label: '글쓰기' },
   { href: '#pricing', label: 'Pricing' },
   { href: '#about', label: 'About' },
   { href: '#contact', label: 'Contact' },
@@ -38,7 +41,8 @@ export function Header() {
 
       {/* Action Button & Mobile Menu Trigger */}
       <div className="flex items-center gap-4">
-        <button
+        <Link
+          href="/write"
           className={cn(
             "hidden sm:block", // Hide on very small screens, show on sm and up
             "bg-primary text-primary-foreground px-5 py-2.5 rounded-sm font-semibold",
@@ -46,8 +50,8 @@ export function Header() {
             "transition-colors"
           )}
         >
-          Get Started
-        </button>
+          글쓰기
+        </Link>
         {/* Render the MobileMenu component */}
         <MobileMenu navItems={navItems} />
       </div>

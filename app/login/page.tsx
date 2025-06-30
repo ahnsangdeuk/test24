@@ -1,4 +1,10 @@
 import { LoginForm } from '@/components/login-form'; // LoginForm 컴포넌트를 임포트합니다 (곧 생성 예정).
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '로그인 - 커뮤니티',
+  description: '커뮤니티 플랫폼에 로그인하세요.',
+};
 
 export default function LoginPage() {
   return (

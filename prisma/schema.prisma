@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String?
+  tags      String   // JSON 형태로 저장 (SQLite는 array 타입이 없음)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
+// 게시판 모델
+model Board {
+  id          String      @id @default(cuid())
+  name        String      // 게시판 이름 (예: "자유게시판")
+  description String?     // 게시판 설명
+  slug        String      @unique // URL용 슬러그 (예: "free")
+  order       Int         @default(0) // 정렬 순서
+  isActive    Boolean     @default(true) // 활성화 여부
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // 관계: 하나의 게시판은 여러 게시글을 가질 수 있음
+  posts       BoardPost[]
+
+  @@map("boards")
+}
+
+// 게시판 글 모델
+model BoardPost {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  author    String    // 작성자 이름
+  boardId   String    // 게시판 ID
+  viewCount Int       @default(0) // 조회수
+  isNotice  Boolean   @default(false) // 공지사항 여부
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // 관계: 게시글은 하나의 게시판에 속함
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  
+  // 관계: 하나의 게시글은 여러 댓글을 가질 수 있음
+  comments  Comment[]
+
+  @@map("board_posts")
+}
+
+// 댓글 모델
+model Comment {
+  id        String    @id @default(cuid())
+  content   String
+  author    String    // 작성자 이름
+  postId    String    // 게시글 ID
+  parentId  String?   // 대댓글용 부모 댓글 ID
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // 관계: 댓글은 하나의 게시글에 속함
+  post      BoardPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // 자기 참조 관계: 대댓글
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
