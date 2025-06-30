@@ -1,36 +1,38 @@
-# Sample workflow for building and deploying a Next.js site to GitHub Pages
+# Next.js 앱을 GitHub Pages에 빌드하고 배포하는 샘플 워크플로
 #
-# To get started with Next.js see: https://nextjs.org/docs/getting-started
+# GitHub Pages로 배포하려면:
+# 1. 리포지토리 설정에서 Pages 소스를 "GitHub Actions"로 설정
+# 2. 이 워크플로는 main 브랜치에 푸시할 때마다 자동으로 실행됩니다
 #
 name: Deploy Next.js site to Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # main 브랜치에 푸시할 때 실행
   push:
     branches: ["main"]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Actions 탭에서 수동으로 실행할 수 있도록 설정
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# GitHub Pages에 배포하기 위한 권한 설정
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# 동시 배포를 허용하지 않지만, 진행 중인 실행을 취소하고 최신 실행을 대기열에 추가
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Build job
+  # 빌드 작업
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -48,39 +50,43 @@ jobs:
             echo "Unable to determine package manager"
             exit 1
           fi
+          
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
+          
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v4
         with:
-          # Automatically inject basePath in your Next.js configuration file and disable
-          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
-          #
-          # You may remove this line if you want to manage the configuration yourself.
+          # GitHub Pages와 함께 사용될 때 Next.js가 정적으로 내보내지도록 자동으로 구성
           static_site_generator: next
+          
       - name: Restore cache
         uses: actions/cache@v4
         with:
           path: |
             .next/cache
-          # Generate a new cache whenever packages or source files change.
+          # 다음이 변경될 때마다 새 캐시 키 생성:
+          # - 운영 체제, Node.js 버전, lockfile이 변경된 경우 다른 runner
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          # If source files changed but packages didn't, rebuild from a prior cache.
+          # 소스 파일이 변경되었지만 의존성이 변경되지 않은 경우, 이전 캐시에서 부분 일치로 다시 빌드
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+            
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
 
-  # Deployment job
+  # 배포 작업
   deploy:
     environment:
       name: github-pages

@@ -117,36 +117,26 @@ export async function getPostsByCategory(category: string): Promise<Post[]> {
   }
 }
 
-// 글 검색
+// 글 검색 (SQLite 호환)
 export async function searchPosts(query: string): Promise<Post[]> {
   try {
-    const posts = await prisma.post.findMany({
-      where: {
-        OR: [
-          {
-            title: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            content: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            tags: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          }
-        ]
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    // SQLite에서는 COLLATE NOCASE를 사용하여 대소문자 구분 없는 검색을 수행
+    const posts = await prisma.$queryRaw<Array<{
+      id: string;
+      title: string;
+      content: string;
+      category: string | null;
+      tags: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }>>`
+      SELECT * FROM Post 
+      WHERE 
+        title LIKE '%' || ${query} || '%' COLLATE NOCASE OR
+        content LIKE '%' || ${query} || '%' COLLATE NOCASE OR
+        tags LIKE '%' || ${query} || '%' COLLATE NOCASE
+      ORDER BY createdAt DESC
+    `;
 
     return posts.map(post => ({
       ...post,
@@ -157,6 +147,43 @@ export async function searchPosts(query: string): Promise<Post[]> {
     }));
   } catch (error) {
     console.error('Error searching posts:', error);
-    throw new Error('글 검색 중 오류가 발생했습니다.');
+    // 만약 위의 쿼리가 실패하면 기본적인 contains 검색 사용 (대소문자 구분)
+    try {
+      const posts = await prisma.post.findMany({
+        where: {
+          OR: [
+            {
+              title: {
+                contains: query
+              }
+            },
+            {
+              content: {
+                contains: query
+              }
+            },
+            {
+              tags: {
+                contains: query
+              }
+            }
+          ]
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      return posts.map(post => ({
+        ...post,
+        tags: JSON.parse(post.tags || '[]'),
+        category: post.category || '',
+        createdAt: post.createdAt.toISOString(),
+        updatedAt: post.updatedAt.toISOString()
+      }));
+    } catch (fallbackError) {
+      console.error('Fallback search also failed:', fallbackError);
+      throw new Error('글 검색 중 오류가 발생했습니다.');
+    }
   }
 } 
