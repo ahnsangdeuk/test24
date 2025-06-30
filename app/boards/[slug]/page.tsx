@@ -1,4 +1,5 @@
 import { BoardPostList } from '@/components/board-post-list';
+import { getStaticBoardBySlug, isStaticBuild } from '@/lib/static-data';
 
 interface BoardPageProps {
   params: {
@@ -25,6 +26,16 @@ export default function BoardPage({ params }: BoardPageProps) {
 }
 
 export async function generateMetadata({ params }: BoardPageProps) {
+  // 정적 빌드 환경에서는 mock 데이터 사용
+  if (isStaticBuild) {
+    const board = getStaticBoardBySlug(params.slug);
+    return {
+      title: board ? `${board.name} - 게시판` : '게시판',
+      description: board ? board.description : '게시판에서 소통해보세요.',
+    };
+  }
+
+  // 개발 환경에서는 API 호출
   try {
     const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/boards/${params.slug}`);
     const board = response.ok ? await response.json() : null;

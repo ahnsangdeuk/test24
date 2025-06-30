@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_ACTIONS: true
+      GITHUB_PAGES: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,6 +80,18 @@ jobs:
             
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+
+      - name: Prepare for static build
+        run: |
+          # API 라우트를 임시로 비활성화 (정적 빌드용)
+          mkdir -p app/api-backup
+          if [ -d "app/api" ]; then
+            mv app/api/* app/api-backup/ 2>/dev/null || true
+          fi
+          
+          # 빈 API 디렉토리 생성 (빌드 오류 방지)
+          mkdir -p app/api
+          echo "export default function handler() { return new Response('Static build', { status: 200 }); }" > app/api/health.js
 
       - name: Create mock static data
         run: |

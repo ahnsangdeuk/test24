@@ -1,11 +1,10 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { PostDetailClient } from '@/components/post-detail-client';
 import { cn } from '@/lib/utils';
+import { getStaticPostById, isStaticBuild } from '@/lib/static-data';
 
 interface Post {
   id: string;
@@ -17,7 +16,13 @@ interface Post {
   updatedAt: string;
 }
 
-// 정적 빌드를 위한 params 생성 (서버 컴포넌트 함수)
+interface PostDetailPageProps {
+  params: {
+    id: string;
+  };
+}
+
+// 정적 빌드를 위한 params 생성
 export async function generateStaticParams() {
   // GitHub Actions 환경에서만 정적 params 생성
   if (process.env.GITHUB_ACTIONS === 'true') {
@@ -29,121 +34,46 @@ export async function generateStaticParams() {
   return [];
 }
 
-export default function PostDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadPost = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        if (typeof params.id !== 'string') {
-          throw new Error('잘못된 글 ID입니다.');
-        }
-
-        const response = await fetch(`/api/posts/${params.id}`);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('글을 찾을 수 없습니다.');
-          }
-          const errorData = await response.json();
-          throw new Error(errorData.error || '글을 불러오는데 실패했습니다.');
-        }
-
-        const postData = await response.json();
-        setPost(postData);
-      } catch (error) {
-        console.error('Error loading post:', error);
-        setError(error instanceof Error ? error.message : '글을 불러오는 중 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPost();
-  }, [params.id]);
-
-  const handleDelete = async () => {
-    if (!post || !confirm('정말로 이 글을 삭제하시겠습니까?')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '글 삭제에 실패했습니다.');
-      }
-
-      router.push('/posts');
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      alert(error instanceof Error ? error.message : '글 삭제 중 오류가 발생했습니다.');
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="py-8">
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="text-center py-12">
-              <div className="text-lg text-muted">글을 불러오는 중...</div>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+async function getPost(id: string): Promise<Post | null> {
+  // 정적 빌드 환경에서는 mock 데이터 사용
+  if (isStaticBuild) {
+    return getStaticPostById(id);
   }
 
-  if (error || !post) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="py-8">
-          <div className="max-w-4xl mx-auto p-6">
-            <div className="text-center py-12">
-              <h1 className="text-2xl font-bold text-foreground mb-4">
-                {error || '글을 찾을 수 없습니다'}
-              </h1>
-              <p className="text-muted mb-6">요청하신 글이 존재하지 않거나 삭제되었을 수 있습니다.</p>
-              <Link
-                href="/posts"
-                className={cn(
-                  "inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium",
-                  "hover:bg-primary/90 transition-colors"
-                )}
-              >
-                글 목록으로 돌아가기
-              </Link>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+  // 개발 환경에서는 API 호출
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/posts/${id}`, {
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    return null;
+  }
+}
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+export default async function PostDetailPage({ params }: PostDetailPageProps) {
+  const post = await getPost(params.id);
+
+  if (!post) {
+    notFound();
   }
 
   return (
@@ -182,15 +112,11 @@ export default function PostDetailPage() {
               </div>
 
               {/* 액션 버튼 */}
-              <div className="flex gap-2">
-                <button
-                  onClick={handleDelete}
-                  className="text-red-500 hover:text-red-700 p-2 rounded-md hover:bg-red-50"
-                  title="글 삭제"
-                >
-                  🗑️
-                </button>
-              </div>
+              {!isStaticBuild && (
+                <div className="flex gap-2">
+                  <PostDetailClient postId={post.id} />
+                </div>
+              )}
             </div>
 
             {/* 태그 */}
